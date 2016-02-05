@@ -18,9 +18,16 @@ url = 'http://yaroslavvb.com/upload/notMNIST/'
 
 def load(data_folders, min_num_images_per_class):
     dataset_names = []
+
     for folder in data_folders:
-        dataset = load_letter(folder, min_num_images_per_class)
         set_filename = folder + '.pickle'
+
+        if os.path.isfile(set_filename):
+            dataset_names.append(set_filename)
+            continue
+
+        dataset = load_letter(folder, min_num_images_per_class)
+
         try:
             with open(set_filename, 'wb') as f:
                 pickle.dump(dataset, f, pickle.HIGHEST_PROTOCOL)
