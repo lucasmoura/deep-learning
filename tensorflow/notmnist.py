@@ -81,7 +81,7 @@ def maybe_download(filename, expected_bytes):
 def get_folders_name(root):
     data_folders = [
         os.path.join(root, d) for d in sorted(os.listdir(root))
-        if d != '.DS_Store']
+        if d != '.DS_Store' and os.path.isdir(os.path.join(root, d))]
 
     return data_folders
 
