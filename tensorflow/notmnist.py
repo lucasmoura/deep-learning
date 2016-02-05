@@ -78,23 +78,32 @@ def maybe_download(filename, expected_bytes):
                         '. Can you get to it with a browser?')
 
 
+def get_folders_name(root):
+    data_folders = [
+        os.path.join(root, d) for d in sorted(os.listdir(root))
+        if d != '.DS_Store']
+
+    return data_folders
+
+
 def extract(filename):
     tar = tarfile.open(filename)
     root = os.path.splitext(os.path.splitext(filename)[0])[0]  # remove .tar.gz
 
     print('Extracting data for %s. This may take a while. Please wait.' % root)
 
-    if os.path.isdir(root) and len(os.listdir(root)) == num_classes:
-        data_folders = sorted(os.listdir(root))
-        return data_folders
+    if os.path.isdir(root):
+        folders = [d for d in os.listdir(root)
+                   if os.path.isdir(os.path.join(root, d))]
+
+        if len(folders) == num_classes:
+            return get_folders_name(root)
 
     sys.stdout.flush()
     tar.extractall()
     tar.close()
 
-    data_folders = [
-        os.path.join(root, d) for d in sorted(os.listdir(root))
-        if d != '.DS_Store']
+    data_folders = get_folders_name(root)
 
     if len(data_folders) != num_classes:
         raise Exception('Expected %d folders, one per class. Found %d instead.'
