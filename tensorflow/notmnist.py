@@ -14,7 +14,12 @@ images_list = ['notMNIST_large/A/a2F6b28udHRm.png',
                'notMNIST_large/A/a2FkZW4udHRm.png']
 num_classes = 10
 pixel_depth = 255.0  # Number of levels per pixel.
+train_size = 200000
+test_size = 10000
+valid_size = 10000
 url = 'http://yaroslavvb.com/upload/notMNIST/'
+
+np.random.seed(133)
 
 
 def load(data_folders, min_num_images_per_class):
@@ -182,6 +187,13 @@ def show_sample_image_from_dataset(dataset_list):
     plt.show()
 
 
+def randomize(dataset, labels):
+    permutation = np.random.permutation(labels.shape[0])
+    shuffled_dataset = dataset[permutation, :, :]
+    shuffled_labels = labels[permutation]
+    return shuffled_dataset, shuffled_labels
+
+
 def verify_dataset_data_balance(dataset_list):
     num_data_per_class = []
 
@@ -212,6 +224,20 @@ def main():
 
     if verify_dataset_data_balance(test_datasets):
         print 'Test dataset is well balanced!'
+
+    [valid_dataset, valid_labels,
+     train_dataset, train_labels] = merge_datasets(train_datasets,
+                                                   train_size, valid_size)
+    __, __, test_dataset, test_labels = merge_datasets(test_datasets,
+                                                       test_size)
+
+    print('Training:', train_dataset.shape, train_labels.shape)
+    print('Validation:', valid_dataset.shape, valid_labels.shape)
+    print('Testing:', test_dataset.shape, test_labels.shape)
+
+    train_dataset, train_labels = randomize(train_dataset, train_labels)
+    test_dataset, test_labels = randomize(test_dataset, test_labels)
+
 
 if __name__ == "__main__":
     main()
