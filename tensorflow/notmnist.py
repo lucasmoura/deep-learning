@@ -22,6 +22,16 @@ url = 'http://yaroslavvb.com/upload/notMNIST/'
 np.random.seed(133)
 
 
+def check_overlap_data(dataset1, dataset2):
+    dataset1.flags.writeable = False
+    dataset2.flags.writeable = False
+
+    hash1 = set([hash(image.data) for image in dataset1])
+    hash2 = set([hash(image.data) for image in dataset2])
+
+    return len(set.intersection(hash1, hash2))
+
+
 def load(data_folders, min_num_images_per_class):
     dataset_names = []
 
@@ -237,6 +247,13 @@ def main():
 
     train_dataset, train_labels = randomize(train_dataset, train_labels)
     test_dataset, test_labels = randomize(test_dataset, test_labels)
+
+    print ('Overlap between training and validation data: %d'
+           % check_overlap_data(train_dataset, valid_dataset))
+    print ('Overlap between training and test data: %d'
+           % check_overlap_data(train_dataset, test_dataset))
+    print ('Overlap between validation and test data: %d'
+           % check_overlap_data(valid_dataset, test_dataset))
 
 
 if __name__ == "__main__":
