@@ -140,6 +140,19 @@ def show_sample_image_from_dataset(dataset_list):
     plt.show()
 
 
+def verify_dataset_data_balance(dataset_list):
+    num_data_per_class = []
+
+    for dataset in dataset_list:
+        with open(dataset, 'r') as d:
+            images = pickle.load(d)
+            num_data_per_class.append(images.shape[0])
+
+    num_data_array = np.array(num_data_per_class)
+
+    return True if num_data_array.std() < 1.2 else False
+
+
 def main():
     train_filename = maybe_download('notMNIST_large.tar.gz', 247336696)
     test_filename = maybe_download('notMNIST_small.tar.gz', 8458043)
@@ -151,8 +164,12 @@ def main():
     test_datasets = load(test_folders, 1800)
 
     # show_images(images_list)
-    show_sample_image_from_dataset(train_datasets)
+    # show_sample_image_from_dataset(train_datasets)
+    if verify_dataset_data_balance(train_datasets):
+        print 'Train dataset is well balanced!'
 
+    if verify_dataset_data_balance(test_datasets):
+        print 'Test dataset is well balanced!'
 
 if __name__ == "__main__":
     main()
