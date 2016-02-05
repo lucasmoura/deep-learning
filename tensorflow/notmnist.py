@@ -1,5 +1,6 @@
 import os
 import sys
+import random
 import tarfile
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -127,14 +128,30 @@ def show_images(images_list):
         plt.show()
 
 
+def show_sample_image_from_dataset(dataset_list):
+    dataset_id = random.randint(0, len(dataset_list)-1)
+
+    with open(dataset_list[dataset_id], 'r') as dataset:
+        images = pickle.load(dataset)
+
+    image_id = random.randint(0, len(images)-1)
+    image_array = images[image_id]
+    plt.imshow(image_array, cmap=plt.cm.gray)
+    plt.show()
+
+
 def main():
     train_filename = maybe_download('notMNIST_large.tar.gz', 247336696)
     test_filename = maybe_download('notMNIST_small.tar.gz', 8458043)
 
     train_folders = extract(train_filename)
     test_folders = extract(test_filename)
-    
-    show_images(images_list)
+
+    train_datasets = load(train_folders, 45000)
+    test_datasets = load(test_folders, 1800)
+
+    # show_images(images_list)
+    show_sample_image_from_dataset(train_datasets)
 
 
 if __name__ == "__main__":
