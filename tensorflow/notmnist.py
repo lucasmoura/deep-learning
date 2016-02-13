@@ -2,10 +2,13 @@ import os
 import sys
 import random
 import tarfile
+
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import numpy as np
+
 from scipy import ndimage
+from sklearn import linear_model
 from six.moves import cPickle as pickle
 from six.moves.urllib.request import urlretrieve
 
@@ -217,6 +220,37 @@ def verify_dataset_data_balance(dataset_list):
     return True if num_data_array.std() < 1.2 else False
 
 
+def reshape_dataset(dataset, num_samples):
+    samples, width, height = dataset.shape
+    return np.reshape(dataset, (samples, width * height))[0:num_samples]
+
+
+def apply_logistic_regression(train_dataset, train_labels, num_training=False):
+    logistic_regression = linear_model.LogisticRegression(C=0.001)
+
+    if not num_training:
+        num_training = train_dataset.shape[0] - 1
+
+    dataset = reshape_dataset(train_dataset, num_training)
+
+    logistic_regression.fit(dataset, train_labels[0:num_training])
+
+    return logistic_regression
+
+
+def show_logistic_regression_results(logistic_regression_model, test_dataset,
+                                     test_labels, num_test=False):
+    if not num_test:
+        num_test = test_dataset.shape[0] - 1
+
+    images_array = logistic_regression_model.coef_.reshape(
+                        num_classes, image_size, image_size)
+
+    for i in range(num_classes):
+        plt.imshow(images_array[i], cmap=plt.cm.gray)
+        plt.show()
+
+
 def main():
     train_filename = maybe_download('notMNIST_large.tar.gz', 247336696)
     test_filename = maybe_download('notMNIST_small.tar.gz', 8458043)
@@ -254,6 +288,15 @@ def main():
            % check_overlap_data(train_dataset, test_dataset))
     print ('Overlap between validation and test data: %d'
            % check_overlap_data(valid_dataset, test_dataset))
+
+    print("Applying logistic regression...")
+    num_training = False
+    logistic_regression_model = apply_logistic_regression(
+                                    train_dataset, train_labels, num_training)
+
+    print("Showing logistic regression results...")
+    show_logistic_regression_results(logistic_regression_model, test_dataset,
+                                     test_labels, num_training)
 
 
 if __name__ == "__main__":
