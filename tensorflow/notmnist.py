@@ -22,6 +22,8 @@ test_size = 10000
 valid_size = 10000
 url = 'http://yaroslavvb.com/upload/notMNIST/'
 
+pickle_file = 'notMNIST.pickle'
+
 np.random.seed(133)
 
 
@@ -298,6 +300,24 @@ def main():
     show_logistic_regression_results(logistic_regression_model, test_dataset,
                                      test_labels, num_training)
 
+    try:
+        f = open(pickle_file, 'wb')
+        save = {
+            'train_dataset': train_dataset,
+            'train_labels': train_labels,
+            'valid_dataset': valid_dataset,
+            'valid_labels': valid_labels,
+            'test_dataset': test_dataset,
+            'test_labels': test_labels,
+            }
+        pickle.dump(save, f, pickle.HIGHEST_PROTOCOL)
+        f.close()
+    except Exception as e:
+        print('Unable to save data to', pickle_file, ':', e)
+        raise
+
+    statinfo = os.stat(pickle_file)
+    print('Compressed pickle size:', statinfo.st_size)
 
 if __name__ == "__main__":
     main()
