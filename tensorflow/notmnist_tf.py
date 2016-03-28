@@ -8,9 +8,14 @@ from six.moves import range
 image_size = 28
 num_steps = 801
 num_labels = 10
+num_hidden_neurons = 1024
 pickle_file = 'notMNIST.pickle'
 batch_size = 128
-train_subset = 10000
+
+
+def forward_propagation(data, weights_01, weights_02, biases_01, biases_02):
+    n1 = tf.nn.relu(tf.matmul(data, weights_01) + biases_01)
+    return tf.matmul(n1, weights_02) + biases_02
 
 
 def accuracy(predictions, labels):
@@ -60,9 +65,13 @@ def main():
         # These are the parameters that we are going to be training. The weight
         # matrix will be initialized using random valued following a
         # (truncated) normal distribution. The biases get initialized to zero.
-        weights = tf.Variable(
-            tf.truncated_normal([image_size * image_size, num_labels]))
-        biases = tf.Variable(tf.zeros([num_labels]))
+        weights_01 = tf.Variable(
+            tf.truncated_normal([image_size * image_size, num_hidden_neurons]))
+        biases_01 = tf.Variable(tf.zeros([num_hidden_neurons]))
+
+        weights_02 = tf.Variable(
+            tf.truncated_normal([num_hidden_neurons, num_labels]))
+        biases_02 = tf.Variable(tf.zeros([num_labels]))
 
         # Training computation.
         # We multiply the inputs with the weight matrix, and add biases.
@@ -70,22 +79,27 @@ def main():
         # TensorFlow, because it's very common, and it can be optimized).
         # We take the average of this cross-entropy across all
         # training examples: that's our loss.
-        logits = tf.matmul(tf_train_dataset, weights) + biases
+        logits = forward_propagation(tf_train_dataset, weights_01, weights_02,
+                                     biases_01, biases_02)
+
         loss = tf.reduce_mean(
             tf.nn.softmax_cross_entropy_with_logits(logits, tf_train_labels))
 
         # Optimizer.
         # We are going to find the minimum of this loss using gradient descent.
-        optimizer = tf.train.GradientDescentOptimizer(0.5).minimize(loss)
+        optimizer = tf.train.GradientDescentOptimizer(0.3).minimize(loss)
 
         # Predictions for the training, validation, and test data.
         # These are not part of training, but merely here so that we can report
         # accuracy figures as we train.
         train_prediction = tf.nn.softmax(logits)
+
         valid_prediction = tf.nn.softmax(
-            tf.matmul(tf_valid_dataset, weights) + biases)
+            forward_propagation(tf_valid_dataset, weights_01, weights_02,
+                                biases_01, biases_02))
         test_prediction = tf.nn.softmax(
-            tf.matmul(tf_test_dataset, weights) + biases)
+            forward_propagation(tf_test_dataset, weights_01, weights_02,
+                                biases_01, biases_02))
 
     with tf.Session(graph=graph) as session:
         # This is a one-time operation which ensures the parameters get
@@ -108,8 +122,10 @@ def main():
             # feed to it.
             feed_dict = {tf_train_dataset: batch_data,
                          tf_train_labels: batch_labels}
+
             _, l, predictions = session.run(
                 [optimizer, loss, train_prediction], feed_dict=feed_dict)
+
             if (step % 500 == 0):
                 print("Minibatch loss at step %d: %f" % (step, l))
                 print("Minibatch accuracy: %.1f%%" % accuracy(predictions,
