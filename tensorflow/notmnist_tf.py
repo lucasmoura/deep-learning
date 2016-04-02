@@ -11,11 +11,13 @@ num_labels = 10
 num_hidden_neurons = 1024
 pickle_file = 'notMNIST.pickle'
 batch_size = 128
-beta = 0.006
+beta = 0.007
 
 
-def forward_propagation(data, weights_01, weights_02, biases_01, biases_02):
+def forward_propagation(data, weights_01, weights_02, biases_01, biases_02,
+                        keep_probability):
     n1 = tf.nn.relu(tf.matmul(data, weights_01) + biases_01)
+    n1 = tf.nn.dropout(n1, keep_probability)
     return tf.matmul(n1, weights_02) + biases_02
 
 
@@ -59,6 +61,7 @@ def main():
             tf.float32, shape=(batch_size, image_size * image_size))
         tf_train_labels = tf.placeholder(tf.float32,
                                          shape=(batch_size, num_labels))
+        keep_probability = tf.placeholder(tf.float32)
         tf_valid_dataset = tf.constant(valid_dataset)
         tf_test_dataset = tf.constant(test_dataset)
 
@@ -81,7 +84,7 @@ def main():
         # We take the average of this cross-entropy across all
         # training examples: that's our loss.
         logits = forward_propagation(tf_train_dataset, weights_01, weights_02,
-                                     biases_01, biases_02)
+                                     biases_01, biases_02, keep_probability)
 
         loss = tf.reduce_mean(
             tf.nn.softmax_cross_entropy_with_logits(logits, tf_train_labels))
@@ -89,7 +92,6 @@ def main():
         # Applying L2 regularization
         regularizers = tf.nn.l2_loss(weights_01) + tf.nn.l2_loss(weights_02)
         loss += beta * regularizers
-
 
         # Optimizer.
         # We are going to find the minimum of this loss using gradient descent.
@@ -102,10 +104,10 @@ def main():
 
         valid_prediction = tf.nn.softmax(
             forward_propagation(tf_valid_dataset, weights_01, weights_02,
-                                biases_01, biases_02))
+                                biases_01, biases_02, keep_probability))
         test_prediction = tf.nn.softmax(
             forward_propagation(tf_test_dataset, weights_01, weights_02,
-                                biases_01, biases_02))
+                                biases_01, biases_02, keep_probability))
 
     with tf.Session(graph=graph) as session:
         # This is a one-time operation which ensures the parameters get
@@ -127,7 +129,8 @@ def main():
             # of the graph to be fed,  and the value is the numpy array to
             # feed to it.
             feed_dict = {tf_train_dataset: batch_data,
-                         tf_train_labels: batch_labels}
+                         tf_train_labels: batch_labels,
+                         keep_probability: 0.5}
 
             _, l, predictions = session.run(
                 [optimizer, loss, train_prediction], feed_dict=feed_dict)
@@ -137,10 +140,12 @@ def main():
                 print("Minibatch accuracy: %.1f%%" % accuracy(predictions,
                                                               batch_labels))
                 print("Validation accuracy: %.1f%%" % accuracy(
-                    valid_prediction.eval(), valid_labels))
+                    valid_prediction.eval(feed_dict={keep_probability: 1.0}),
+                    valid_labels))
 
-        print('Test accuracy: %.1f%%' % accuracy(test_prediction.eval(),
-                                                 test_labels))
+        print('Test accuracy: %.1f%%' % accuracy(
+            test_prediction.eval(feed_dict={keep_probability: 1.0}),
+            test_labels))
 
 
 if __name__ == '__main__':
