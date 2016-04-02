@@ -11,6 +11,7 @@ num_labels = 10
 num_hidden_neurons = 1024
 pickle_file = 'notMNIST.pickle'
 batch_size = 128
+beta = 0.006
 
 
 def forward_propagation(data, weights_01, weights_02, biases_01, biases_02):
@@ -84,6 +85,11 @@ def main():
 
         loss = tf.reduce_mean(
             tf.nn.softmax_cross_entropy_with_logits(logits, tf_train_labels))
+
+        # Applying L2 regularization
+        regularizers = tf.nn.l2_loss(weights_01) + tf.nn.l2_loss(weights_02)
+        loss += beta * regularizers
+
 
         # Optimizer.
         # We are going to find the minimum of this loss using gradient descent.
