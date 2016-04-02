@@ -69,6 +69,7 @@ def main():
         # These are the parameters that we are going to be training. The weight
         # matrix will be initialized using random valued following a
         # (truncated) normal distribution. The biases get initialized to zero.
+        global_step = tf.Variable(0)
         weights_01 = tf.Variable(
             tf.truncated_normal([image_size * image_size, num_hidden_neurons]))
         biases_01 = tf.Variable(tf.zeros([num_hidden_neurons]))
@@ -95,7 +96,10 @@ def main():
 
         # Optimizer.
         # We are going to find the minimum of this loss using gradient descent.
-        optimizer = tf.train.GradientDescentOptimizer(0.3).minimize(loss)
+        learning_rate = tf.train.exponential_decay(
+            0.5, global_step, 100, 0.96, staircase=True)
+        optimizer = tf.train.GradientDescentOptimizer(
+            learning_rate).minimize(loss, global_step=global_step)
 
         # Predictions for the training, validation, and test data.
         # These are not part of training, but merely here so that we can report
